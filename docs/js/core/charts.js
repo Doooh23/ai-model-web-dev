@@ -492,6 +492,115 @@
   };
   window.addEventListener('resize', function () { C.redrawAll(); });
 
+  /* ==========================================================================
+   *  레이더(거미줄) 차트 — 축이 여러 개인 점수를 한눈에
+   *
+   *  이 사이트에서는 네 축(예측력·투자 성과·안정성·실용성) 점수를 그립니다.
+   *  ★ 가운데가 0이 아니라 **한가운데 원이 0점(기준선)**입니다. 그 원보다
+   *    안쪽으로 들어가면 기준선보다 못하다는 뜻입니다. 이걸 표시하지 않으면
+   *    "작으니까 조금 나쁜가 보다" 정도로 잘못 읽습니다.
+   *
+   *  opt = {
+   *    axes:   [{label}],                 // 축 이름
+   *    series: [{name, values, color}],   // values 는 axes 와 같은 길이
+   *    min: -100, max: 100, zero: 0
+   *  }
+   * ========================================================================*/
+  C.radar = function (canvas, opt) {
+    const draw = function () {
+      const s = setup(canvas), ctx = s.ctx, th = theme();
+      const axes = opt.axes || [], series = opt.series || [];
+      const n = axes.length;
+      if (n < 3) return;
+
+      const min = opt.min === undefined ? -100 : opt.min;
+      const max = opt.max === undefined ? 100 : opt.max;
+      const zero = opt.zero === undefined ? 0 : opt.zero;
+      const cx = s.w / 2, cy = s.h / 2 + 4;
+      const R = Math.max(30, Math.min(s.w / 2 - 74, s.h / 2 - 30));
+      const rad = function (v) {
+        const t = (Math.max(min, Math.min(max, v)) - min) / (max - min);
+        return t * R;
+      };
+      const angle = function (i) { return -Math.PI / 2 + i * 2 * Math.PI / n; };
+      const px = function (i, r) { return cx + Math.cos(angle(i)) * r; };
+      const py = function (i, r) { return cy + Math.sin(angle(i)) * r; };
+
+      // 배경 그물
+      const rings = opt.rings || [min, (min + zero) / 2, zero, (zero + max) / 2, max];
+      rings.forEach(function (v) {
+        const r = rad(v), isZero = Math.abs(v - zero) < 1e-9;
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const a = i % n;
+          const x = px(a, r), y = py(a, r);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = isZero ? th.axis : th.grid;
+        ctx.lineWidth = isZero ? 1.5 : 1;
+        if (isZero) ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // 축 선과 이름
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      for (let i = 0; i < n; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(px(i, R), py(i, R));
+        ctx.strokeStyle = th.grid;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const lx = px(i, R + 16), ly = py(i, R + 16);
+        ctx.fillStyle = th.sec;
+        ctx.textBaseline = 'middle';
+        const c = Math.cos(angle(i));
+        ctx.textAlign = c > 0.25 ? 'left' : (c < -0.25 ? 'right' : 'center');
+        ctx.fillText(axes[i].label, lx, ly);
+      }
+
+      // 0점 표시
+      ctx.fillStyle = th.muted;
+      ctx.font = '10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('0 = 기준선', cx, cy - rad(zero) - 4);
+
+      // 각 모델의 다각형
+      series.forEach(function (se, si) {
+        const color = se.color || C.seriesColor(si);
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const a = i % n;
+          const v = isFinite(se.values[a]) ? se.values[a] : zero;
+          const x = px(a, rad(v)), y = py(a, rad(v));
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        for (let i = 0; i < n; i++) {
+          const v = isFinite(se.values[i]) ? se.values[i] : zero;
+          ctx.beginPath();
+          ctx.arc(px(i, rad(v)), py(i, rad(v)), 2.6, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }
+      });
+    };
+    draw();
+    canvas.__redraw = draw;
+    C.observe(canvas);
+  };
+
   // 범례 만들기 (색만으로 구분하지 않도록 항상 이름을 함께 보여줍니다)
   C.legend = function (items) {
     const box = U.el('div', 'legend');

@@ -253,6 +253,8 @@ table.t td, table.tbl td {
 table.t tbody tr:last-child td { border-bottom: 0; }
 table.t th.num, table.t td.num, table.tbl th.num, table.tbl td.num { text-align: right; }
 table.t tbody tr:hover { background: var(--surface-2); }
+/* 기준선 줄은 한 톤 죽여 둡니다 — 비교 대상이 아니라 '자'이기 때문입니다 */
+table.t tbody tr.muted td { color: var(--ink-3); background: var(--surface-2); }
 .tbl-scroll {
   max-height: 480px; overflow: auto;
   border: 1px solid var(--line); border-radius: var(--r-sm);

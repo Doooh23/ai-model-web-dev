@@ -147,6 +147,7 @@
     const ds = prep.ds;
     const folds = [];
     const allRet = [], allDates = [], allBH = [];
+    const allY = [], allP = [];            // ROC 곡선을 그리려면 원본 예측이 필요합니다
     const loss = [];                       // 통계 검정용 — 하루하루의 손실값
     let ms = 0;
 
@@ -196,6 +197,8 @@
           allRet.push(bt.ret[i]);
           allBH.push(p.test.ret[i]);
           allDates.push(p.test.dates[i]);
+          allY.push(p.test.y[i]);
+          allP.push(proba[i]);
           // 손실 = 브라이어 점수 (확률이 정답에서 얼마나 멀었나)
           loss.push(Math.pow(proba[i] - p.test.y[i], 2));
         }
@@ -229,6 +232,7 @@
         n: allRet.length
       };
       out.daily = { ret: allRet, bh: allBH, dates: allDates, cum: Array.from(perf.cum) };
+      out.pred = { y: allY, proba: allP };
     } else if (def.task === 'volatility') {
       out.overall = {
         mse: U.mean(folds.map(function (f) { return f.mse; }).filter(isFinite)),
@@ -298,8 +302,10 @@
         stochastic: !!def.stochastic, interpret: def.interpret, cost: def.cost,
         runs: runs, seeds: runs.map(function (x) { return x.seed; }),
         ms: U.mean(runs.map(function (x) { return x.ms; })),
+        // 폴드별 표·자산곡선·ROC는 첫 시드 것을 씁니다(여러 시드를 겹쳐 그리면 읽기 어려움).
         folds: runs[0].folds,
         daily: runs[0].daily,
+        pred: runs[0].pred,
         loss: runs[0].loss
       };
       if (def.task !== 'regime') {
@@ -313,12 +319,19 @@
       results.push(r);
     });
 
-    return { config: c, describe: EXP.describe(c), leak: prep.leak,
+    const out = { config: c, describe: EXP.describe(c), leak: prep.leak, asked: asked,
       dataset: { rows: prep.ds.X.length, cols: prep.ds.cols, featVer: prep.ds.featVer,
         from: prep.ds.dates[0], to: prep.ds.dates[prep.ds.dates.length - 1],
         upRate: prep.ds.upRate, dropped: prep.ds.dropped },
       splits: prep.splits, results: results };
+
+    // 마지막 실행 결과를 남겨 둡니다. 종합 점수표 화면이 이걸 그대로 채점합니다
+    // (같은 실험 결과를 두 화면이 공유해야 숫자가 어긋나지 않습니다).
+    EXP.last = out;
+    return out;
   };
+
+  EXP.last = null;
 
   root.EXP = EXP;
 })(window.QL = window.QL || {});
