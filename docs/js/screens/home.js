@@ -31,13 +31,36 @@
       why: '막히면 언제든 돌아올 곳.' }
   ];
 
-  App.register('home', {
-    render: function (host) {
+  // 설명서는 저장소에 있는 마크다운 문서입니다. GitHub 이 알아서 예쁘게 렌더링해 주므로
+  // 사이트 안에 같은 내용을 한 벌 더 두지 않고 그쪽으로 보냅니다(내용이 갈라지지 않게).
+  const GUIDE_URL =
+    'https://github.com/Doooh23/ai-model-web-dev/blob/main/%EC%82%AC%EC%9A%A9%EC%84%A4%EB%AA%85%EC%84%9C.md';
+
+  // 사전 학습 결과(predictions.json)는 첫 화면이 그려진 뒤에 도착합니다.
+  // 다시 그려 주지 않으면 "등록된 모델 23/30 · 사전 학습 결과 없음"이 그대로 남습니다.
+  let hostRef = null;
+
+  function draw(host) {
+      hostRef = host;
+      host.innerHTML = '';
       host.appendChild(App.intro(
         '여러 AI 모델에게 <b>똑같은 문제</b>를 내고, 어떤 모델이 어떤 상황에 적합한지 점수로 비교합니다.',
         '이 사이트는 "가장 좋은 모델"을 하나 뽑지 않습니다. 방향 예측에 강한 모델, 변동성 예측에 강한 모델, ' +
         '요동치는 구간에서 강한 모델이 각각 다르기 때문입니다. 결론은 항상 <b>축별 승자</b>로 냅니다.'
       ));
+
+      /* --- 사용설명서 --------------------------------------------------- */
+      const p0 = App.panel('처음이신가요?', { sub: '주식·AI·통계를 몰라도 됩니다' });
+      p0.body.appendChild(App.note(
+        '화면 하나하나, 숫자 하나하나를 처음부터 설명한 <b>사용설명서</b>가 있습니다. ' +
+        '따라 하면 되는 10분 코스, 화면에 나오는 모든 지표의 뜻과 기준값, ' +
+        '결과를 잘못 읽는 흔한 방식까지 적어 두었습니다.'));
+      const guide = U.el('a', 'btn primary', '사용설명서 열기 →');
+      guide.href = GUIDE_URL;
+      guide.target = '_blank';
+      guide.rel = 'noopener';
+      p0.body.appendChild(guide);
+      host.appendChild(p0);
 
       /* --- 지금 데이터 상태 ------------------------------------------------ */
       const m = DATA.state.meta || {};
@@ -95,6 +118,10 @@
         { ok: false, text: '이 사이트의 결과로 실제 투자를 하면 안 됩니다. 교육·연구용입니다.' }
       ]));
       host.appendChild(p3);
-    }
+  }
+
+  App.register('home', {
+    render: function (host) { draw(host); },
+    onFullData: function () { if (hostRef) draw(hostRef); }
   });
 })(window.QL = window.QL || {});

@@ -278,6 +278,8 @@ table.t tbody tr.muted td { color: var(--ink-3); background: var(--surface-2); }
 .btn.danger { border-color: #eab3ae; color: var(--down); background: var(--down-tint); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.sm { padding: 4px 9px; font-size: 12px; }
+/* 링크를 버튼 모양으로 쓸 때 (a 는 기본이 inline 이라 세로 여백이 먹지 않습니다) */
+a.btn { display: inline-block; text-decoration: none; }
 
 .seg {
   display: inline-flex; border: 1px solid var(--line-2);
