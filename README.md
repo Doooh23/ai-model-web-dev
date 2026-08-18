@@ -3,6 +3,8 @@
 여러 AI 모델로 나스닥 주가를 예측·모의투자해 보고, **어떤 모델이 어떤 상황에 적합한지
 점수로 비교**하는 교육용 사이트입니다. 대상은 통계·머신러닝을 배운 적 없는 고등학교 3학년.
 
+**→ https://doooh23.github.io/ai-model-web-dev/**
+
 빌드 도구가 없습니다. `docs/` 를 GitHub Pages로 그대로 띄우면 끝입니다.
 순수 자바스크립트(IIFE + `window.QL` 네임스페이스)와 `<script>` 나열로만 되어 있습니다.
 
@@ -57,7 +59,17 @@ pipeline/                 파이썬 데이터 수집·학습
 .github/workflows/
   update-market-data.yml  평일 매일 자동 데이터 갱신
   train-models.yml        주 1회 모델 사전 학습
+  pages.yml               docs/ → GitHub Pages 배포
 ```
+
+### 배포
+
+`main` 의 `docs/` 가 바뀌면 `pages.yml` 이 자동으로 다시 올립니다. 데이터 갱신이나
+모델 사전 학습 워크플로가 `docs/data/*.json` 을 커밋하면 그 push 로 사이트도 함께
+갱신됩니다. 손으로 할 일은 없습니다.
+
+빌드 단계가 없어서 배포는 파일 복사가 전부입니다(약 4MB). 모든 경로가 상대 경로라
+`/ai-model-web-dev/` 같은 하위 경로에서도 그대로 동작합니다.
 
 ### 사전 학습 모델
 
