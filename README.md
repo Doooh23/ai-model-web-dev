@@ -64,12 +64,21 @@ pipeline/                 파이썬 데이터 수집·학습
 
 ### 배포
 
-`main` 의 `docs/` 가 바뀌면 `pages.yml` 이 자동으로 다시 올립니다. 데이터 갱신이나
-모델 사전 학습 워크플로가 `docs/data/*.json` 을 커밋하면 그 push 로 사이트도 함께
-갱신됩니다. 손으로 할 일은 없습니다.
+**처음 한 번만** 저장소 주인이 Pages 를 켜 줘야 합니다. 워크플로 토큰에는 저장소
+설정을 바꿀 권한이 없어서 자동으로 켤 수 없습니다.
 
-빌드 단계가 없어서 배포는 파일 복사가 전부입니다(약 4MB). 모든 경로가 상대 경로라
+> Settings → Pages → Build and deployment → Source → **GitHub Actions** 선택
+> 그다음 Actions → "사이트 배포 (GitHub Pages)" → Run workflow
+
+그 뒤로는 전부 자동입니다. `main` 의 `docs/` 가 바뀌면 `pages.yml` 이 다시 올리고,
+데이터 갱신이나 모델 사전 학습 워크플로가 `docs/data/*.json` 을 커밋하면 그 push 로
+사이트도 함께 갱신됩니다.
+
+빌드 단계가 없어서 배포는 파일 복사가 전부입니다(약 4.5MB). 모든 경로가 상대 경로라
 `/ai-model-web-dev/` 같은 하위 경로에서도 그대로 동작합니다.
+
+Actions 를 쓰지 않고 Source 를 **Deploy from a branch → main / docs** 로 골라도
+사이트는 똑같이 뜹니다(그 경우 `pages.yml` 은 필요 없습니다).
 
 ### 사전 학습 모델
 
