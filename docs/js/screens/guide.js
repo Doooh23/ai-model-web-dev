@@ -46,30 +46,98 @@
 
   /* ------------------------------------------------------------------------
    *  목차 — ## 만 뽑습니다 (### 까지 넣으면 목차가 본문만큼 길어집니다)
+   *
+   *  항목이 14개나 되고 제목도 길어서, 그냥 늘어놓으면 글자벽이 됩니다.
+   *  세 가지로 나눠 읽히게 합니다.
+   *    ① 앞의 번호를 떼어 내 왼쪽 배지로 — 본문 메뉴(0~7)와 같은 생김새
+   *    ② 제목의 부연(— 뒤, 괄호 안)은 한 톤 죽여 아랫줄로
+   *    ③ 지금 읽고 있는 장을 표시 (아래 scrollspy)
    * ----------------------------------------------------------------------*/
+  function split(text) {
+    let num = '', main = text, tail = '';
+    const m = main.match(/^(\d+)\.\s*/);
+    if (m) { num = m[1]; main = main.slice(m[0].length); }
+    // 부연은 '—' 뒤 또는 괄호 안. 둘 중 먼저 나오는 쪽에서 자릅니다.
+    const i = main.indexOf('—');
+    const j = main.indexOf('(');
+    const cut = (i >= 0 && (j < 0 || i < j)) ? i : (j >= 0 ? j : -1);
+    if (cut > 0) { tail = main.slice(cut).trim(); main = main.slice(0, cut).trim(); }
+    return { num: num, main: main, tail: tail };
+  }
+
   function tocEl(body) {
     const box = U.el('nav', 'md-toc');
     box.appendChild(U.el('div', 'md-toc-k', '목차'));
+
+    const links = [];
     S.headings.filter(function (h) { return h.level === 2; }).forEach(function (h) {
-      const a = U.el('a', '', h.text);
+      const p = split(h.text);
+      const a = U.el('a', p.num ? '' : 'plain');
       a.href = '#' + h.id;
+      a.setAttribute('data-id', h.id);
+
+      const n = U.el('i', 'n', p.num || '·');
+      a.appendChild(n);
+
+      const t = U.el('span', 't');
+      t.appendChild(U.el('b', '', p.main));
+      if (p.tail) t.appendChild(U.el('em', '', p.tail));
+      a.appendChild(t);
+
       a.addEventListener('click', function (ev) {
         ev.preventDefault();
+        mark(h.id);
         jump(body, h.id);
       });
       box.appendChild(a);
+      links.push(a);
     });
+
+    /* --- 지금 읽는 장 표시 (scrollspy) --------------------------------- */
+    function mark(id) {
+      links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('data-id') === id); });
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        if (!body.isConnected) { window.removeEventListener('scroll', onScroll); return; }
+        const line = topGap() + 4;
+        let cur = null;
+        links.forEach(function (a) {
+          const el = byId(body, a.getAttribute('data-id'));
+          if (el && el.getBoundingClientRect().top <= line) cur = a.getAttribute('data-id');
+        });
+        // 맨 위에서는 첫 항목을 켭니다(아직 아무 제목도 지나지 않은 상태).
+        if (!cur && links.length) cur = links[0].getAttribute('data-id');
+        if (cur) mark(cur);
+      });
+    }
+    // 화면을 떠나면 body 가 문서에서 빠지므로 위에서 스스로 정리합니다.
+    window.addEventListener('scroll', onScroll, { passive: true });
+    setTimeout(onScroll, 0);
+
     return box;
+  }
+
+  function byId(body, id) {
+    return body.querySelector('[id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+  }
+
+  function topGap() {
+    return (parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--top'), 10) || 54) + 16;
   }
 
   // 위쪽 얇은 막대에 제목이 가리지 않도록 그 높이만큼 띄워서 멈춥니다.
   // 높이는 CSS 의 --top 에 적혀 있으니 여기서 다시 정하지 않고 읽어 옵니다.
   function jump(body, id) {
-    const t = body.querySelector('[id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    const t = byId(body, id);
     if (!t) return;
-    const top = parseInt(getComputedStyle(document.documentElement)
-      .getPropertyValue('--top'), 10) || 54;
-    const y = t.getBoundingClientRect().top + window.pageYOffset - top - 16;
+    const y = t.getBoundingClientRect().top + window.pageYOffset - topGap();
     window.scrollTo({ top: y, behavior: 'smooth' });
   }
 
