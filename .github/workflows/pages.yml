@@ -15,6 +15,18 @@ on:
     paths:
       - "docs/**"
       - ".github/workflows/pages.yml"
+
+  # ★ 데이터 갱신·모델 학습 워크플로가 끝나면 이어서 배포합니다.
+  #
+  #   이게 왜 필요한가: 그 워크플로들이 docs/data/*.json 을 커밋하지만, 그 push 는
+  #   위의 push 트리거를 **작동시키지 못합니다**. GitHub 은 워크플로 토큰
+  #   (GITHUB_TOKEN)으로 만든 push 로는 다른 워크플로를 트리거하지 않습니다.
+  #   워크플로가 서로를 끝없이 부르는 사고를 막으려는 안전장치입니다.
+  #   그래서 push 대신 "그 워크플로가 끝났다"는 신호를 직접 받습니다.
+  workflow_run:
+    workflows: ["시장 데이터 자동 갱신", "모델 사전 학습"]
+    types: [completed]
+
   workflow_dispatch:
 
 permissions:
@@ -30,6 +42,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # 앞선 워크플로가 실패했으면 배포하지 않습니다(workflow_run 은 실패해도 옵니다).
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -37,6 +53,11 @@ jobs:
     steps:
       - name: 저장소 가져오기
         uses: actions/checkout@v4
+        with:
+          # workflow_run 으로 불려 왔을 때는 "그 워크플로가 시작된 시점"의 커밋이
+          # 기본값이라, 그 워크플로가 방금 만든 데이터 커밋이 빠집니다.
+          # 항상 main 의 최신을 올리도록 못 박아 둡니다.
+          ref: main
 
       - name: 올릴 내용 확인
         run: |
