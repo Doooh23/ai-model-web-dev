@@ -1,0 +1,71 @@
+name: 사이트 배포 (GitHub Pages)
+
+# docs/ 폴더를 그대로 GitHub Pages 로 올립니다.
+# 빌드 도구가 없는 순수 정적 사이트라 따로 컴파일할 것이 없습니다.
+#
+# 데이터 갱신(update-market-data.yml)이나 모델 사전 학습(train-models.yml)이
+# docs/data/*.json 을 커밋하면 그 push 로 이 워크플로가 다시 돌아 사이트가 갱신됩니다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 하나씩. 진행 중인 배포를 취소하지 않습니다(중간 상태로 남을 수 있어서).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
+      - name: 올릴 내용 확인
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          need = ["index.html", "css/style.css", "data/daily.json", "data/meta.json"]
+          docs = pathlib.Path("docs")
+          missing = [n for n in need if not (docs / n).exists()]
+          if missing:
+              sys.exit("필수 파일이 없습니다: " + ", ".join(missing))
+          meta = json.loads((docs / "data" / "meta.json").read_text(encoding="utf-8"))
+          print(f"데이터 {meta['n_days']}일 · 종목 {meta['n_tickers']}개 · 갱신 {meta['updated']}")
+          pred = docs / "data" / "predictions.json"
+          if pred.exists():
+              p = json.loads(pred.read_text(encoding="utf-8"))
+              print("사전 학습 모델:", ", ".join(p.get("models", {})))
+          else:
+              print("사전 학습 결과 없음 (사이트는 브라우저 모델만으로 동작합니다)")
+          total = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file())
+          print(f"올릴 용량 {total/1024/1024:.1f} MB")
+          PY
+
+      - name: Pages 설정
+        uses: actions/configure-pages@v5
+        with:
+          # 저장소에서 Pages 가 아직 켜져 있지 않으면 켭니다.
+          enablement: true
+
+      - name: docs/ 묶기
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: 배포
+        id: deployment
+        uses: actions/deploy-pages@v4
