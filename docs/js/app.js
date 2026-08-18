@@ -20,7 +20,10 @@
   App.go = function (id) {
     if (!App.screens[id]) return;
     App.screen = id;
-    $$('.step').forEach(function (b) { b.classList.toggle('on', b.dataset.screen === id); });
+    // 사용설명서는 내비에 따로 없는 화면입니다. 아무 탭도 안 켜져 있으면
+    // "내가 어디 있는 거지"가 되므로, 들어온 곳인 '0 시작'을 켜 둡니다.
+    const navId = (id === 'guide') ? 'home' : id;
+    $$('.step').forEach(function (b) { b.classList.toggle('on', b.dataset.screen === navId); });
     const host = App.host();
     host.innerHTML = '';
     App.stepHint(id);

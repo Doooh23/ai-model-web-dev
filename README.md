@@ -35,12 +35,14 @@
 ```
 docs/                     ← GitHub Pages 로 배포되는 사이트 전체
   index.html              화면 뼈대와 스크립트 나열
-  css/style.css           디자인 시스템 (밝은 종이색 · 잉크 블루 액센트)
+  css/style.css           디자인 시스템 (어두운 회청색 · 왼쪽 세로 내비 · 파랑 액센트)
   data/*.json             나스닥100 일봉·매크로·섹터 (자동 갱신)
   js/core/util.js         시드 고정 난수, 숫자 서식, 통계, DOM 도우미
   js/core/metrics.js      AUC·ROC·혼동행렬, CAGR·샤프·최대낙폭, EWMA·GARCH
   js/core/charts.js       캔버스 차트 (line/bars/roc/hist/scatter)
   js/core/ml.js           로지스틱·랜덤포레스트·그래디언트부스팅·MLP
+  js/core/md.js           작은 마크다운 변환기 (사용설명서를 사이트 안에서 그림)
+  js/core/tips.js         용어 자동 설명 — 화면의 글을 훑어 점선 밑줄·말풍선을 답니다
   js/core/ml_lite.js      k-NN·나이브베이즈·SVM(RBF)·Ridge·ElasticNet·ARIMA·앙상블
   js/core/vol.js          GJR-GARCH · HAR-RV · RF-Vol
   js/core/regime.js       k-means 국면 · Isolation Forest
@@ -51,9 +53,11 @@ docs/                     ← GitHub Pages 로 배포되는 사이트 전체
   js/experiment.js        ★ 실험 실행 엔진 (캐시·진행률·다중 시드·거래비용)
   js/score.js             ★ 4축 점수 + 통계 검정 (부트스트랩·AUC·DM)
   js/universe.js          종목 선정 규칙 (기간·결측·유동성·섹터 분산)
+  js/glossary.js          용어 사전 한 곳 (~110개 · tips.js 와 배우기 화면이 함께 씀)
   js/data.js              데이터 로딩 (최근 2년 먼저 → 전체 기간 교체)
   js/app.js               라우터와 공통 UI 부품
-  js/screens/*.js         화면 8개
+  js/screens/*.js         화면 9개 (0~7 + 사용설명서)
+  사용설명서.md            아무것도 모르는 사람용 안내서 (사이트 안에서도, GitHub 에서도 같은 글)
 pipeline/                 파이썬 데이터 수집·학습
   fetch_market.py         yfinance + FRED → docs/data/*.json
   universe.py             나스닥100 목록·섹터·FOMC 날짜
