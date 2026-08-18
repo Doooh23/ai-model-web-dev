@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# 비밀정보 — FRED API 키 등은 절대 커밋하지 마세요.
+# (권장: 키를 코드에 직접 넣지 말고 아래 파일에 두거나 Colab에서만 입력)
+.env
+secrets.py
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+fomc_cache/
+runs/
+data_cache/
+__pycache__/
+*.pyc
+docs/data-dev/

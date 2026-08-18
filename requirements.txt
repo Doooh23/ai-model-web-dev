@@ -1,0 +1,25 @@
+# 데이터 수집 파이프라인 (pipeline/fetch_market.py)
+#
+#   pip install -r requirements.txt
+#   python -m pipeline.fetch_market
+#
+# 사이트 자체는 순수 자바스크립트라 아무것도 설치할 필요가 없습니다.
+# 아래는 데이터를 직접 받거나 무거운 모델을 미리 학습할 때만 필요합니다.
+
+numpy>=1.24
+pandas>=2.0
+
+# 실제 주가 내려받기 (매크로 지표는 FRED 공개 CSV라 키가 필요 없습니다)
+yfinance>=0.2.40
+
+# --- 2단계에서 추가될 사전 학습용 (pipeline/train_models.py) -----------------
+# LSTM·GRU·Transformer·TCN 학습에 필요. GPU를 쓰려면 CUDA 빌드로 따로 설치하세요:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+# torch>=2.0
+#
+# EGARCH 등 비대칭 변동성 모형의 정밀 추정
+# arch>=6.0
+#
+# HMM 국면 라벨
+# hmmlearn>=0.3
+# scikit-learn>=1.3

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI MODEL LAB — 나스닥 AI 모델 비교</title>
+<meta name="description" content="여러 AI 모델로 나스닥 주가를 예측·모의투자해 보고, 어떤 모델이 어떤 상황에 적합한지 점수로 비교하는 교육용 사이트.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230e1013'/><text x='16' y='23' font-size='17' font-family='monospace' fill='%23e0a33e' text-anchor='middle'>AI</text></svg>">
+<link rel="stylesheet" href="css/terminal.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="brand-cell">
+    <div class="brand-mark">AI</div>
+    <div class="brand-name">AI MODEL LAB
+      <small>나스닥 AI 모델 비교 실험실</small>
+    </div>
+  </div>
+
+  <div class="topbar" id="topbar">
+    <span class="tiny">여러 AI 모델에게 똑같은 문제를 내고, 어떤 모델이 어떤 상황에 강한지 점수로 비교합니다.</span>
+  </div>
+
+  <nav class="rail">
+    <div class="nav-group">
+      <div class="nav-label">시작</div>
+      <button class="nav-item on" data-screen="home">시작하기<span class="key">0</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">준비</div>
+      <button class="nav-item" data-screen="models">모델 도감<span class="key">1</span></button>
+      <button class="nav-item" data-screen="universe">종목 선정<span class="key">2</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">실험</div>
+      <button class="nav-item" data-screen="lab">학습 실험실<span class="key">3</span></button>
+      <button class="nav-item" data-screen="trade">모의투자<span class="key">4</span></button>
+      <button class="nav-item" data-screen="regime">국면 분석<span class="key">5</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">결론</div>
+      <button class="nav-item" data-screen="score">종합 점수표<span class="key">6</span></button>
+      <button class="nav-item" data-screen="learn">배우기<span class="key">7</span></button>
+    </div>
+  </nav>
+
+  <main class="main" id="main">
+    <div id="boot" style="padding:40px 4px">
+      <span class="spinner"></span>
+      <span class="small" style="margin-left:8px">시장 데이터를 불러오는 중…</span>
+    </div>
+    <div id="stephint"></div>
+    <div id="screen"></div>
+  </main>
+
+  <div class="statusbar" id="statusbar"></div>
+</div>
+
+<!-- 공통 도구: 다른 파일들이 모두 여기에 기댑니다 -->
+<script src="js/core/util.js"></script>
+<script src="js/core/metrics.js"></script>
+<script src="js/core/charts.js"></script>
+<script src="js/core/ml.js"></script>
+
+<!-- 데이터 (features.js 가 로드 시점에 참조하므로 반드시 먼저) -->
+<script src="js/data.js"></script>
+
+<!-- 모델 레이어: 피처 → 분할 → 모델 등록부 → 사전학습 결과 -->
+<script src="js/features.js"></script>
+<script src="js/splits.js"></script>
+<script src="js/registry.js"></script>
+<script src="js/predictions.js"></script>
+
+<!-- 화면 -->
+<script src="js/app.js"></script>
+<script src="js/screens/home.js"></script>
+<script src="js/screens/models.js"></script>
+<script src="js/screens/universe.js"></script>
+<script src="js/screens/lab.js"></script>
+<script src="js/screens/trade.js"></script>
+<script src="js/screens/regime.js"></script>
+<script src="js/screens/score.js"></script>
+<script src="js/screens/learn.js"></script>
+<script>QL.App.boot();</script>
+</body>
+</html>
