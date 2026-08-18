@@ -5,6 +5,10 @@ name: 사이트 배포 (GitHub Pages)
 #
 # 데이터 갱신(update-market-data.yml)이나 모델 사전 학습(train-models.yml)이
 # docs/data/*.json 을 커밋하면 그 push 로 이 워크플로가 다시 돌아 사이트가 갱신됩니다.
+#
+# ※ 처음 한 번은 사람이 Pages 를 켜 줘야 합니다.
+#   워크플로 토큰(GITHUB_TOKEN)에는 저장소 설정을 바꿀 권한이 없어서, 이 워크플로가
+#   Pages 자체를 켤 수는 없습니다. 아래 '설정 확인' 단계가 그 사실을 알려 줍니다.
 on:
   push:
     branches: [main]
@@ -55,11 +59,37 @@ jobs:
           print(f"올릴 용량 {total/1024/1024:.1f} MB")
           PY
 
+      # Pages 가 꺼져 있으면 아래 configure-pages 가 "Not Found" 라는 알아보기 어려운
+      # 오류로 죽습니다. 무엇을 해야 하는지 먼저 또박또박 알려 주고 멈춥니다.
+      - name: Pages 설정 확인
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            echo "Pages 가 켜져 있습니다. 배포를 진행합니다."
+          else
+            cat <<'MSG'
+          ────────────────────────────────────────────────────────────────
+           GitHub Pages 가 아직 켜져 있지 않습니다.
+
+           워크플로 토큰에는 저장소 설정을 바꿀 권한이 없어서 자동으로 켤 수
+           없습니다. 저장소 주인이 한 번만 해 주면 그다음부터는 전부 자동입니다.
+
+             Settings → Pages → Build and deployment → Source
+               "GitHub Actions" 선택
+
+           그리고 이 워크플로를 다시 실행하세요.
+             Actions → "사이트 배포 (GitHub Pages)" → Run workflow
+
+           (Actions 를 쓰지 않고 "Deploy from a branch" 로 main / docs 를 골라도
+            사이트는 뜹니다. 다만 그 경우 이 워크플로는 필요 없습니다.)
+          ────────────────────────────────────────────────────────────────
+          MSG
+            exit 1
+          fi
+
       - name: Pages 설정
         uses: actions/configure-pages@v5
-        with:
-          # 저장소에서 Pages 가 아직 켜져 있지 않으면 켭니다.
-          enablement: true
 
       - name: docs/ 묶기
         uses: actions/upload-pages-artifact@v3
