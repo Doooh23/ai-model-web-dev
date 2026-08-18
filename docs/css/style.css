@@ -742,9 +742,25 @@ canvas { display: block; width: 100%; }
   .md { max-width: none; }
 }
 
-/* 인쇄: 발표 자료로 뽑을 수 있게 */
+/* 인쇄: 발표 자료로 뽑을 수 있게 --------------------------------------------
+ * 종이는 흽니다. 화면용 어두운 변수를 밝은 값으로 뒤집지 않으면
+ * 흰 종이에 흰 글자가 나옵니다. (캔버스 차트는 그린 시점의 색 그대로
+ * 어두운 그림으로 인쇄됩니다 — 그건 감수합니다.) */
 @media print {
-  .mast, .foot { display: none; }
+  :root {
+    color-scheme: light;
+    --paper: #fff; --surface: #fff; --surface-2: #f5f4f2; --surface-3: #ececea;
+    --line: #ddd; --line-2: #aaa;
+    --ink: #111; --ink-2: #444; --ink-3: #767676;
+    --brand: #2b4fd8; --brand-solid: #2b4fd8; --brand-2: #1b34a3; --brand-tint: #eef1fc;
+    --up: #0e7a54; --up-tint: #e7f5ef; --up-line: #b7e2ce;
+    --down: #c23a31; --down-tint: #fdeceb; --down-line: #eab3ae;
+    --warn: #92600d; --warn-tint: #fdf3e2; --warn-line: #f0d9ac;
+    --sh: none; --sh-1: none;
+  }
+  .side, .topbar, .foot { display: none; }
+  .shell { grid-template-columns: 1fr; }
   body { background: #fff; }
   .panel { break-inside: avoid; box-shadow: none; }
+  .termtip { display: none; }
 }

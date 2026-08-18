@@ -96,7 +96,14 @@
     build();
     if (!PAT) return 0;
 
-    const seen = {};                                   // 한 화면에 용어당 한 번
+    // 한 화면에 용어당 한 번. 화면 일부만 다시 그려질 때(예: 점수표의 가중치
+    // 슬라이더는 결과 표만 갈아 끼웁니다) 재스캔이 일어나는데, 이미 밑줄이
+    // 붙어 있는 용어를 미리 등록해 두지 않으면 같은 용어가 화면에 두 번
+    // 세 번 밑줄로 쌓입니다.
+    const seen = {};
+    host.querySelectorAll('.term').forEach(function (el) {
+      seen[el.getAttribute('data-term')] = 1;
+    });
     const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
     const jobs = [];
     let n;

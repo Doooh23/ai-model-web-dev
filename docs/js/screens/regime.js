@@ -14,7 +14,7 @@
   'use strict';
   const U = root.U, C = root.C, M = root.M, App = root.App, EXP = root.EXP, REG = root.REG;
 
-  const COLORS = ['#0e8a5f', '#8a8580', '#d3453b'];   // 상승 / 횡보 / 고변동
+  const COLORS = ['#3fcf8e', '#9aa4b4', '#ff7166'];   // 상승 / 횡보 / 고변동 (어두운 배경용)
   const S = { running: false, err: null, prog: null };
 
   function nameCell(r) {
