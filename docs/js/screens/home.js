@@ -61,23 +61,26 @@
 
       /* --- 학습 순서 ------------------------------------------------------- */
       const p2 = App.panel('이 순서대로 보세요', { sub: '위에서부터 차례로 눌러 가면 됩니다' });
+      const route = U.el('div', 'route');
       ORDER.forEach(function (s) {
         const row = U.el('div', 'card');
-        row.style.marginBottom = '8px';
-        const top = U.el('div', 'card-top');
-        const num = U.el('span', 'badge badge-base', String(s.n));
-        top.appendChild(num);
-        top.appendChild(U.el('span', 'card-name', s.title));
-        const btn = U.el('button', 'btn sm', '화면 열기');
-        btn.style.marginLeft = 'auto';
-        btn.addEventListener('click', function () { App.go(s.id); });
-        top.appendChild(btn);
-        row.appendChild(top);
+        row.appendChild(U.el('span', 'route-n', String(s.n)));
+
+        const mid = U.el('div');
+        mid.style.flex = '1';
+        mid.appendChild(U.el('div', 'card-name', s.title));
         const why = U.el('div', 'card-why');
         why.innerHTML = s.what + ' <span class="tiny">— ' + U.escape(s.why) + '</span>';
-        row.appendChild(why);
-        p2.body.appendChild(row);
+        mid.appendChild(why);
+        row.appendChild(mid);
+
+        const btn = U.el('button', 'btn sm', '열기');
+        btn.addEventListener('click', function () { App.go(s.id); });
+        row.appendChild(btn);
+
+        route.appendChild(row);
       });
+      p2.body.appendChild(route);
       host.appendChild(p2);
 
       /* --- 먼저 알아 둘 것 -------------------------------------------------- */

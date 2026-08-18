@@ -29,12 +29,15 @@
 ```
 docs/                     ← GitHub Pages 로 배포되는 사이트 전체
   index.html              화면 뼈대와 스크립트 나열
-  css/terminal.css        다크 터미널 테마
+  css/style.css           디자인 시스템 (밝은 종이색 · 잉크 블루 액센트)
   data/*.json             나스닥100 일봉·매크로·섹터 (자동 갱신)
   js/core/util.js         시드 고정 난수, 숫자 서식, 통계, DOM 도우미
   js/core/metrics.js      AUC·ROC·혼동행렬, CAGR·샤프·최대낙폭, EWMA·GARCH
   js/core/charts.js       캔버스 차트 (line/bars/roc/hist/scatter)
-  js/core/ml.js           브라우저에서 도는 머신러닝 (로지스틱·랜덤포레스트·부스팅·MLP)
+  js/core/ml.js           로지스틱·랜덤포레스트·그래디언트부스팅·MLP
+  js/core/ml_lite.js      k-NN·나이브베이즈·SVM(RBF)·Ridge·ElasticNet·ARIMA·앙상블
+  js/core/vol.js          GJR-GARCH · HAR-RV · RF-Vol
+  js/core/regime.js       k-means 국면 · Isolation Forest
   js/features.js          ★ 피처를 만드는 단 하나의 장소
   js/splits.js            ★ 시간순 워크포워드 분할 + 학습구간 기준 표준화
   js/registry.js          ★ 모델 등록부이자 공통 인터페이스
@@ -48,6 +51,17 @@ pipeline/                 파이썬 데이터 수집·학습
 .github/workflows/
   update-market-data.yml  평일 매일 자동 데이터 갱신
 ```
+
+### 디자인
+
+원본 저장소는 어두운 트레이딩 터미널 테마였습니다. 이 사이트는 **밝은 교과서**로
+완전히 새로 만들었습니다. 오래 읽어야 하는 화면이고, 읽는 사람이 고등학생이기 때문입니다.
+
+- 종이색 바탕(`#f4f2ee`) 위의 흰 카드, 12px 둥근 모서리, 옅은 그림자
+- 액센트는 잉크 블루 하나. 빨강·초록은 오직 오름/내림 표시에만 씁니다
+- 본문 폭을 1180px로 묶고, 위쪽 가로 내비게이션이 0→7 학습 순서를 그대로 보여 줍니다
+- 좁은 화면에서는 내비게이션이 번호만 남기고 접힙니다
+- 밝은 테마 하나로 갑니다(의도된 선택)
 
 ---
 
@@ -101,11 +115,35 @@ python -m pipeline.fetch_market --synthetic   # 인터넷 없이 형식만 같�
 
 - [x] **1단계 골격** — 재활용 파일 정리, 라우터·화면 8개 뼈대, 공통 UI 부품
 - [x] **2단계-A 공통 인터페이스** — `registry.js` / `features.js` / `splits.js` / `predictions.js`
-- [ ] **2단계-B 모델 레이어** — 신규 경량 모델(k-NN·나이브베이즈·SVM·Ridge·앙상블·GJR·HAR·k-means·IsolationForest),
-      `pipeline/train_models.py` 와 `docs/data/predictions.json`
+- [x] **2단계-B1 브라우저 모델** — 신규 12종. 등록된 30개 중 **23개가 지금 실행 가능**
+      (남은 7개는 파이썬 사전 학습 몫: LSTM·GRU·TCN·Transformer·EGARCH·LSTM-Vol·HMM)
+- [x] **디자인 전면 교체** — 터미널 테마 → 밝은 교과서 테마
+- [ ] **2단계-B2 파이썬 사전 학습** — `pipeline/train_models.py`, `docs/data/predictions.json`, 주 1회 워크플로
 - [ ] **3단계 평가 레이어** — `score.js` (기준선 대비 점수, 4축 가중합, 부트스트랩, DM 검정)
 - [ ] **4단계 화면** — 종목 선정 → 학습 실험실 → 모의투자 → 국면 분석 → 종합 점수표 → 배우기
 - [ ] **5단계 눈높이 다듬기** — 용어 툴팁, 비유, 수식 접기, 방향 표시 전면 적용
+
+---
+
+## 지금까지 확인된 결과
+
+AAPL · 2807행 × 15피처 · 시간순 5겹 워크포워드 (헤드리스 브라우저로 실측)
+
+| 방향 예측 | AUC(평균±표준편차) | | 변동성 예측 | EWMA 대비 MSE |
+|---|---|---|---|---|
+| 신경망(MLP) | 0.520 ± 0.013 | | GJR-GARCH | **+8.6%** |
+| Ridge | 0.508 ± 0.053 | | RF-Vol | +2.4% |
+| k-NN | 0.507 ± 0.035 | | GARCH(1,1) | +2.0% |
+| 랜덤워크(기준선) | 0.507 ± 0.013 | | HAR-RV | +0.5% |
+| 동전 던지기(기준선) | 0.487 ± 0.045 | | EWMA(기준선) | 0% |
+
+방향 예측 AUC가 전부 0.5 언저리인 것이 **정상이고 정직한 결과**입니다.
+0.7 같은 값이 나왔다면 데이터 누출을 의심해야 합니다. 반대로 변동성은
+실제로 예측이 되고, 하락 충격의 비대칭을 반영한 GJR-GARCH가 가장 좋습니다.
+
+k-means 국면(학습 구간 2517일)은 상승(+9.9%·변동성 27.5%) / 횡보(+2.1%·16.9%) /
+하락·고변동(−6.7%·37.5%) 셋으로 갈라집니다. 국면 이름은 미리 정해 두지 않고
+각 무리의 실제 평균을 보고 붙입니다.
 
 ---
 

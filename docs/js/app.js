@@ -15,12 +15,12 @@
   App.register = function (id, def) { App.screens[id] = def; };
 
   App.host = function () { return $('#screen'); };
-  App.scrollTop = function () { const m = $('#main'); if (m) m.scrollTop = 0; };
+  App.scrollTop = function () { window.scrollTo(0, 0); };
 
   App.go = function (id) {
     if (!App.screens[id]) return;
     App.screen = id;
-    $$('.nav-item').forEach(function (b) { b.classList.toggle('on', b.dataset.screen === id); });
+    $$('.step').forEach(function (b) { b.classList.toggle('on', b.dataset.screen === id); });
     const host = App.host();
     host.innerHTML = '';
     App.stepHint(id);
@@ -240,25 +240,34 @@
    * ----------------------------------------------------------------------*/
   App.setStatus = function () {
     const m = DATA.state.meta || {};
+    const PRED = root.PRED;
+
+    // 머리글 오른쪽의 작은 알약들 — 지금 보고 있는 데이터가 무엇인지
+    const meta = $('#mastmeta');
+    if (meta) {
+      meta.innerHTML = '';
+      const pill = function (txt, cls) { meta.appendChild(U.el('span', 'pill' + (cls ? ' ' + cls : ''), txt)); };
+      if (m.synthetic) pill('가상 데이터', 'warn');
+      else pill('실데이터', 'live');
+      pill('갱신 ' + String(m.updated || '—').slice(0, 10));
+      pill('종목 ' + (m.n_tickers || DATA.state.tickers.length));
+      pill(DATA.state.full ? '전체 기간' : '최근 구간만');
+    }
+
     const bar = $('#statusbar');
     bar.innerHTML = '';
     const add = function (txt, cls) { bar.appendChild(U.el('span', cls || '', txt)); };
-    const sep = function () { bar.appendChild(U.el('span', 'sep', '│')); };
+    const sep = function () { bar.appendChild(U.el('span', 'sep', '·')); };
 
-    if (m.synthetic) add('◆ 가상 데이터 (실제 시장 아님)', 'amber');
-    else add('◆ 실데이터', 'up');
-    sep();
-    add('갱신 ' + (m.updated || '—'));
-    sep();
-    add('종목 ' + (m.n_tickers || DATA.state.tickers.length));
-    sep();
     add('기간 ' + (DATA.state.dates[0] || '—') + ' ~ ' + (DATA.state.dates[DATA.state.dates.length - 1] || '—'));
     sep();
-    add(DATA.state.full ? '전체 기간 로드됨' : '최근 구간만 로드됨');
+    add('출처 ' + (m.source || '—'));
     sep();
-    const PRED = root.PRED;
-    if (PRED && PRED.state.loaded) add(PRED.state.ok ? '사전 학습 결과 있음' : '사전 학습 결과 없음',
-      PRED.state.ok ? '' : 'amber');
+    if (PRED && PRED.state.loaded) {
+      add(PRED.state.ok ? '사전 학습 결과 있음' : '사전 학습 결과 없음', PRED.state.ok ? 'up' : 'amber');
+      sep();
+    }
+    add('생존 편향 있음 (현재 지수 구성 종목만)', 'amber');
     sep();
     add('교육·연구용 · 실제 투자 판단에 사용 금지');
   };
@@ -279,13 +288,13 @@
    *  시작
    * ----------------------------------------------------------------------*/
   App.boot = function () {
-    $$('.nav-item').forEach(function (b) {
+    $$('.step').forEach(function (b) {
       b.addEventListener('click', function () { App.go(b.dataset.screen); });
     });
     // 숫자키 단축키. 0 = 시작하기, 1~7 = 각 화면
     document.addEventListener('keydown', function (e) {
       if (e.target.matches('input, select, textarea')) return;
-      const items = $$('.nav-item');
+      const items = $$('.step');
       const n = parseInt(e.key, 10);
       if (!isNaN(n) && n >= 0 && n < items.length) App.go(items[n].dataset.screen);
     });
