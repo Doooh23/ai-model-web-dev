@@ -32,24 +32,31 @@
   --ink-2: #b6bdcb;       /* 보조   ( 9.4:1) */
   --ink-3: #8d97a8;       /* 흐림   ( 5.7:1) */
 
-  /* 액센트 — 어두운 바탕에서는 밝은 파랑이 읽히고, 채워진 면에는 진한 파랑이
-     흰 글자를 받칩니다. 그래서 두 개를 따로 둡니다. */
-  --brand:       #7f9cff; /* 글자·테두리용 ( 8.0:1) */
-  --brand-solid: #3f5fe0; /* 채워진 버튼 바탕 (흰 글자 5.2:1) */
-  --brand-2:     #a3b8ff; /* 밝힘(hover) */
-  --brand-tint:  #1a2138; /* 아주 옅은 파랑 바탕 */
+  /* 액센트 — 어두운 바탕에 '얹은 색'이 아니라 '바탕에서 자란 색'이 되도록
+     채도를 낮추고 바탕 쪽으로 당겼습니다. 형광 파랑 한 덩어리가 화면에 박혀
+     있으면 그것만 보이고 정작 읽어야 할 글이 뒤로 밀립니다.
+     역할을 넷으로 나눠 둡니다 — 글자용 / 채운 면 / 그 위의 글자 / 옅은 바탕. */
+  --brand:        #93a7de; /* 글자·테두리용 (바탕 대비 7.8:1) */
+  --brand-2:      #b9c8f0; /* 밝힘(hover) */
+  --brand-solid:  #33456f; /* 채워진 버튼 바탕 */
+  --brand-solid-2:#3d5285; /* 그 hover */
+  --brand-ink:    #e6ecfb; /* 채워진 면 위의 글자 (8.0:1) */
+  --brand-tint:   #1a1f2b; /* 아주 옅은 바탕 — 카드보다 반 단계만 푸릅니다 */
+  --brand-line:   #38445f; /* 옅은 바탕을 두르는 선 */
 
-  /* 의미 색 — 시장 관례. 다른 용도로 쓰지 않습니다. */
-  --up:        #3fcf8e;
-  --up-tint:   #102a20;
-  --up-line:   #2a6a4e;
-  --down:      #ff7166;
-  --down-tint: #2e1715;
-  --down-line: #7d3b35;
+  /* 의미 색 — 시장 관례. 다른 용도로 쓰지 않습니다.
+     바탕(tint)은 거의 무채색까지 낮추고, 색은 선과 글자가 냅니다.
+     그래야 초록·빨강 상자가 화면을 뒤덮지 않으면서도 뜻은 그대로 전해집니다. */
+  --up:        #4ec99a;
+  --up-tint:   #141f1b;
+  --up-line:   #2d5647;
+  --down:      #f2786d;
+  --down-tint: #231a19;
+  --down-line: #633934;
   --flat:      #8d97a8;
-  --warn:      #eba645;
-  --warn-tint: #2c2113;
-  --warn-line: #7a5a22;
+  --warn:      #e0a552;
+  --warn-tint: #221e16;
+  --warn-line: #5c4826;
 
   /* charts.js 가 읽는 이름들 */
   --surface-1:      #171b23;
@@ -58,7 +65,7 @@
   --text-primary:   #e9ecf3;
   --text-secondary: #b6bdcb;
   --text-muted:     #8d97a8;
-  --series-1: #7f9cff;
+  --series-1: #8aa4ea;
   --series-2: #ff7166;
   --series-3: #3fcf8e;
   --series-4: #b98cff;
@@ -115,7 +122,7 @@ code {
 b, strong { font-weight: 650; color: var(--ink); }
 .hidden { display: none !important; }
 
-::selection { background: var(--brand-solid); color: #fff; }
+::selection { background: var(--brand-solid); color: var(--brand-ink); }
 
 /* 스크롤바도 어둡게. 밝은 기본 스크롤바 하나가 화면 전체를 싸구려로 만듭니다. */
 * { scrollbar-color: var(--line-2) transparent; scrollbar-width: thin; }
@@ -152,7 +159,7 @@ b, strong { font-weight: 650; color: var(--ink); }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
 .brand-mark {
   width: 32px; height: 32px; flex: none; border-radius: 9px;
-  background: var(--brand-solid); color: #fff;
+  background: var(--brand-solid); color: var(--brand-ink);
   display: grid; place-items: center;
   font-size: 15px; font-weight: 700; letter-spacing: -.02em;
 }
@@ -188,8 +195,13 @@ b, strong { font-weight: 650; color: var(--ink); }
 }
 .step:hover { background: var(--surface); color: var(--ink); }
 .step:hover b { background: var(--surface-3); color: var(--ink); }
-.step.on { background: var(--brand-tint); color: var(--brand-2); font-weight: 650; }
-.step.on b { background: var(--brand-solid); color: #fff; }
+.step.on {
+  background: var(--brand-tint); color: var(--brand-2); font-weight: 650;
+  /* 색을 차분하게 낮춘 만큼 '지금 여기'는 왼쪽 세로 막대로 못 박습니다.
+     은은한 바탕만으로는 어느 항목이 켜졌는지 한눈에 안 들어옵니다. */
+  box-shadow: inset 2px 0 0 var(--brand);
+}
+.step.on b { background: var(--brand-solid); color: var(--brand-ink); }
 .step:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
 
 /* --- 위쪽 얇은 막대 (지금 보고 있는 데이터) --------------------------------- */
@@ -314,8 +326,11 @@ table.t tbody tr.muted td { color: var(--ink-3); background: var(--surface-2); }
 }
 .btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
 .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.btn.primary { background: var(--brand-solid); border-color: var(--brand-solid); color: #fff; }
-.btn.primary:hover { background: #4c6df0; border-color: #4c6df0; }
+.btn.primary {
+  background: var(--brand-solid); border-color: var(--brand-line);
+  color: var(--brand-ink);
+}
+.btn.primary:hover { background: var(--brand-solid-2); border-color: #4a5c8f; }
 .btn.ghost { border-color: transparent; box-shadow: none; background: none; color: var(--brand); }
 .btn.ghost:hover { background: var(--brand-tint); }
 .btn.danger { border-color: var(--down-line); color: var(--down); background: var(--down-tint); }
@@ -336,7 +351,7 @@ a.btn { display: inline-block; text-decoration: none; }
 }
 .seg button:last-child { border-right: 0; }
 .seg button:hover { background: var(--surface-2); color: var(--ink); }
-.seg button.on { background: var(--brand-solid); color: #fff; font-weight: 600; }
+.seg button.on { background: var(--brand-solid); color: var(--brand-ink); font-weight: 600; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 5px;
@@ -362,13 +377,14 @@ input[type=checkbox] { accent-color: var(--brand); width: 15px; height: 15px; }
  *  안내 · 상태 표시
  * ==========================================================================*/
 .note {
-  border-left: 3px solid var(--brand); border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  border: 1px solid var(--brand-line); border-left: 3px solid var(--brand);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
   background: var(--brand-tint); padding: 12px 15px;
   font-size: 13.5px; color: var(--ink-2); line-height: 1.65;
 }
-.note.warn { border-left-color: var(--warn); background: var(--warn-tint); }
-.note.bad  { border-left-color: var(--down); background: var(--down-tint); }
-.note.ok   { border-left-color: var(--up);   background: var(--up-tint); }
+.note.warn { border-color: var(--warn-line); border-left-color: var(--warn); background: var(--warn-tint); }
+.note.bad  { border-color: var(--down-line); border-left-color: var(--down); background: var(--down-tint); }
+.note.ok   { border-color: var(--up-line);   border-left-color: var(--up);   background: var(--up-tint); }
 
 .small { font-size: 13px; color: var(--ink-2); }
 .tiny  { font-size: 12px; color: var(--ink-3); }
@@ -380,7 +396,7 @@ input[type=checkbox] { accent-color: var(--brand); width: 15px; height: 15px; }
   vertical-align: middle;
 }
 .badge-live { border-color: var(--up-line);   background: var(--up-tint);    color: var(--up); }
-.badge-pre  { border-color: #3b4a86;          background: var(--brand-tint); color: var(--brand-2); }
+.badge-pre  { border-color: var(--brand-line); background: var(--brand-tint); color: var(--brand); }
 .badge-base { border-color: var(--warn-line); background: var(--warn-tint);  color: var(--warn); }
 .badge-soon { border-color: var(--line); background: var(--surface-3); color: var(--ink-3); }
 
@@ -446,7 +462,7 @@ abbr.tip, .term {
 .termtip {
   position: fixed; z-index: 95; pointer-events: none;
   max-width: 320px; padding: 10px 13px;
-  background: #232a36; color: var(--ink-2);
+  background: var(--surface-3); color: var(--ink-2);
   border: 1px solid var(--line-2); border-radius: var(--r-sm);
   box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
   font-size: 12.5px; line-height: 1.6;
@@ -454,7 +470,7 @@ abbr.tip, .term {
   transition: opacity .1s ease, transform .1s ease;
 }
 .termtip.on { opacity: 1; transform: none; }
-.termtip b { display: block; color: var(--brand-2); font-size: 12px; margin-bottom: 3px; }
+.termtip b { display: block; color: var(--brand); font-size: 12px; margin-bottom: 3px; }
 
 /* 수식 접기 */
 details.formula {
@@ -548,7 +564,7 @@ canvas { display: block; width: 100%; }
 
 .chart-tip {
   position: fixed; z-index: 90; pointer-events: none;
-  background: #232a36; color: var(--ink); border: 1px solid var(--line-2);
+  background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
   padding: 8px 11px; font-size: 12px; box-shadow: 0 8px 26px rgba(0, 0, 0, .5);
   max-width: 280px;
@@ -667,8 +683,11 @@ canvas { display: block; width: 100%; }
 .md-toc a:hover .n { background: var(--surface-3); color: var(--ink); }
 
 /* 지금 읽고 있는 장 */
-.md-toc a.on { background: var(--brand-tint); color: var(--brand-2); }
-.md-toc a.on .n { background: var(--brand-solid); color: #fff; }
+.md-toc a.on {
+  background: var(--brand-tint); color: var(--brand-2);
+  box-shadow: inset 2px 0 0 var(--brand);
+}
+.md-toc a.on .n { background: var(--brand-solid); color: var(--brand-ink); }
 .md-toc a.on .t em { color: var(--ink-2); }
 
 /* 번호 없는 항목(머리말·맺음말)은 번호 자리에 점만 찍고 한 칸 떨어뜨립니다 */
@@ -752,7 +771,9 @@ canvas { display: block; width: 100%; }
     --paper: #fff; --surface: #fff; --surface-2: #f5f4f2; --surface-3: #ececea;
     --line: #ddd; --line-2: #aaa;
     --ink: #111; --ink-2: #444; --ink-3: #767676;
-    --brand: #2b4fd8; --brand-solid: #2b4fd8; --brand-2: #1b34a3; --brand-tint: #eef1fc;
+    --brand: #2b4fd8; --brand-2: #1b34a3; --brand-tint: #eef1fc;
+    --brand-solid: #2b4fd8; --brand-solid-2: #1b34a3;
+    --brand-ink: #fff; --brand-line: #c3cdf2;
     --up: #0e7a54; --up-tint: #e7f5ef; --up-line: #b7e2ce;
     --down: #c23a31; --down-tint: #fdeceb; --down-line: #eab3ae;
     --warn: #92600d; --warn-tint: #fdf3e2; --warn-line: #f0d9ac;
