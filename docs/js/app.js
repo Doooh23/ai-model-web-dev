@@ -299,6 +299,9 @@
       if (!isNaN(n) && n >= 0 && n < items.length) App.go(items[n].dataset.screen);
     });
 
+    // 용어 자동 설명 — 화면이 그려질 때마다 알아서 붙습니다.
+    if (root.TIP) root.TIP.start();
+
     const boot = $('#boot');
     DATA.loadFast().then(function () {
       boot.classList.add('hidden');
