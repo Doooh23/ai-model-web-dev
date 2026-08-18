@@ -601,6 +601,55 @@
     C.observe(canvas);
   };
 
+  /* ==========================================================================
+   *  국면 띠 — 날짜를 가로로 늘어놓고 그날의 국면을 색으로 칠합니다
+   *
+   *  표로 "고변동 국면 751일"이라고 쓰는 것보다, 어느 시기에 뭉쳐 있었는지
+   *  띠로 보는 편이 훨씬 빨리 이해됩니다. 2020년 3월이나 2022년처럼
+   *  아는 사건과 겹치는지 눈으로 확인할 수 있기 때문입니다.
+   *
+   *  opt = { labels: [0|1|2...], dates: ['2020-03-02', ...], colors: [...], names: [...] }
+   * ========================================================================*/
+  C.ribbon = function (canvas, opt) {
+    const draw = function () {
+      const s = setup(canvas), ctx = s.ctx, th = theme();
+      const lab = opt.labels || [], dates = opt.dates || [];
+      const n = lab.length;
+      if (!n) return;
+      const padB = 20, H = s.h - padB;
+      const w = s.w / n;
+
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = opt.colors[lab[i]] || th.muted;
+        ctx.fillRect(i * w, 0, Math.max(w, 1) + 0.5, H);
+      }
+
+      // 연도 경계에 눈금
+      ctx.fillStyle = th.muted;
+      ctx.font = '10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      let lastYear = '';
+      for (let i = 0; i < n; i++) {
+        const y = String(dates[i]).slice(0, 4);
+        if (y !== lastYear) {
+          if (lastYear) {
+            ctx.strokeStyle = th.surface;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(i * w, 0); ctx.lineTo(i * w, H);
+            ctx.stroke();
+          }
+          ctx.fillText(y, i * w + 16, H + 4);
+          lastYear = y;
+        }
+      }
+    };
+    draw();
+    canvas.__redraw = draw;
+    C.observe(canvas);
+  };
+
   // 범례 만들기 (색만으로 구분하지 않도록 항상 이름을 함께 보여줍니다)
   C.legend = function (items) {
     const box = U.el('div', 'legend');

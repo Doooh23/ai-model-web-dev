@@ -134,6 +134,9 @@
       exposure: n ? U.sum(Array.from(pos)) / n : 0
     };
   }
+  // 화면에서도 씁니다. 확률과 다음날 수익률만 있으면 비용·기준값을 바꿔 가며
+  // 다시 계산할 수 있어, 모델을 다시 학습하지 않고도 민감도 표를 만들 수 있습니다.
+  EXP.backtest = backtest;
 
   /* ------------------------------------------------------------------------
    *  한 모델 · 한 시드 실행
@@ -212,6 +215,11 @@
         ms += ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - t0;
         folds.push({ fold: k + 1, n: lab.length, labels: lab, dates: p.test.dates,
           info: m.inner && m.inner.stats ? m.inner.stats : null });
+        for (let i = 0; i < lab.length; i++) {
+          allY.push(lab[i]);                       // 국면 번호(또는 이상 점수)
+          allDates.push(p.test.dates[i]);
+          allBH.push(p.test.ret[i]);
+        }
       }
 
       await U.yield_();
@@ -238,6 +246,11 @@
         mse: U.mean(folds.map(function (f) { return f.mse; }).filter(isFinite)),
         qlike: U.mean(folds.map(function (f) { return f.qlike; }).filter(isFinite))
       };
+    } else {
+      // 국면 모델 — 시험 구간 전체의 라벨을 이어 붙여 둡니다.
+      // 다른 모델의 하루하루 성적을 이 라벨로 갈라 보는 것이 5번 화면의 전부입니다.
+      out.daily = { labels: allY, dates: allDates, ret: allBH };
+      out.info = folds.length && folds[0].info ? folds[0].info : null;
     }
 
     EXP.cache[key] = out;
@@ -306,7 +319,8 @@
         folds: runs[0].folds,
         daily: runs[0].daily,
         pred: runs[0].pred,
-        loss: runs[0].loss
+        loss: runs[0].loss,
+        info: runs[0].info          // 국면 모델이 붙인 국면 이름·평균
       };
       if (def.task !== 'regime') {
         r.agg = {};

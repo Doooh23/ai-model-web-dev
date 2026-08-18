@@ -66,12 +66,19 @@
     const f1 = U.el('div', 'field');
     f1.appendChild(U.el('label', '', '종목'));
     const sel = U.el('select');
-    DATA.state.tickers.filter(function (t) { return !DATA.isBenchmark(t); }).forEach(function (t) {
-      const o = U.el('option', '', t + ' · ' + DATA.sector(t));
+    // 종목 선정(2번 화면)에서 기준으로 뽑힌 종목이 맨 위에 옵니다.
+    const chosen = root.UNIV ? root.UNIV.selected().picked : [];
+    const rest = DATA.state.tickers.filter(function (t) {
+      return !DATA.isBenchmark(t) && chosen.indexOf(t) < 0;
+    });
+    const addOpt = function (t, mark) {
+      const o = U.el('option', '', t + ' · ' + DATA.sector(t) + (mark ? ' ★' : ''));
       o.value = t;
       if (t === S.ticker) o.selected = true;
       sel.appendChild(o);
-    });
+    };
+    chosen.forEach(function (t) { addOpt(t, true); });
+    rest.forEach(function (t) { addOpt(t, false); });
     sel.addEventListener('change', function () { S.ticker = sel.value; S.run = null; draw(host); });
     f1.appendChild(sel);
     row.appendChild(f1);
