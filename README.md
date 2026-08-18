@@ -51,9 +51,41 @@ docs/                     ← GitHub Pages 로 배포되는 사이트 전체
 pipeline/                 파이썬 데이터 수집·학습
   fetch_market.py         yfinance + FRED → docs/data/*.json
   universe.py             나스닥100 목록·섹터·FOMC 날짜
+  features.py             ★ docs/js/features.js 와 같은 값을 만드는 파이썬 판
+  train_models.py         LSTM·GRU·TCN·Transformer·EGARCH·HMM → predictions.json
+  check_parity.py         파이썬과 JS 피처가 같은지 확인하는 도구
 .github/workflows/
   update-market-data.yml  평일 매일 자동 데이터 갱신
+  train-models.yml        주 1회 모델 사전 학습
 ```
+
+### 사전 학습 모델
+
+브라우저에서 못 돌리는 모델은 파이썬으로 미리 학습해 예측값만 내려받습니다.
+사이트는 그 값을 브라우저 모델과 **똑같은 얼굴**로 다룹니다(배지만 다릅니다).
+
+| 모델 | 과제 | 구현 |
+|---|---|---|
+| LSTM · GRU · TCN · Transformer | 방향 예측 | torch (없으면 자동 생략) |
+| EGARCH | 변동성 | numpy 직접 구현 (격자 탐색 MLE) |
+| LSTM-Vol | 변동성 | torch |
+| HMM 3상태 | 국면 | numpy 직접 구현 (Baum-Welch) |
+
+```bash
+python -m pipeline.train_models                 # 전체
+python -m pipeline.train_models --skip-deep     # torch 없이 EGARCH·HMM만 (~85초)
+```
+
+**피처가 같은지는 반드시 확인해야 합니다.** 파이썬과 JS 중 한쪽만 고치면 비교가
+조용히 무너지기 때문입니다.
+
+```bash
+python -m pipeline.check_parity                 # 표본 생성
+# 사이트를 띄운 뒤 브라우저 콘솔에서:
+await QL.FEAT.checkParity()   # → { ok: true, nDiff: 0 }
+```
+
+현재 상태: **AAPL 2807행 × 15피처, 값 불일치 0건, 시간순 분할도 동일.**
 
 ### 디자인
 
@@ -157,8 +189,14 @@ python -m pipeline.fetch_market --synthetic   # 인터넷 없이 형식만 같�
 - [x] **3단계 평가 레이어** — `experiment.js`(실행 엔진) + `score.js`(기준선 대비 점수, 4축 가중합,
       부트스트랩 신뢰구간, AUC 검정, DM 검정)
 - [x] **4단계 화면** — 8개 화면 전부 완성. 브라우저에서 학습·백테스트·채점이 모두 돌아갑니다
-- [ ] **2단계-B2 파이썬 사전 학습** — `pipeline/train_models.py`, `docs/data/predictions.json`, 주 1회 워크플로
-- [ ] **5단계 눈높이 다듬기** — 용어 툴팁, 비유, 수식 접기, 방향 표시 전면 적용
+- [x] **2단계-B2 파이썬 사전 학습** — `pipeline/{features,train_models,check_parity}.py`,
+      `docs/data/predictions.json`, 주 1회 워크플로. 피처 일치 0건 불일치 확인
+- [x] **5단계 눈높이 다듬기** — 용어 툴팁·수식 접기·방향 표시(↑↓)·화면별 한 줄 안내를
+      모든 화면에 적용, 배우기 화면에 난이도 세 갈래로 정리
+
+남은 것: `predictions.json` 에 딥러닝 4종을 채우려면 torch 가 있는 환경에서
+`train-models.yml` 워크플로를 한 번 돌려야 합니다(이 저장소에 커밋된 파일은
+numpy만으로 만든 EGARCH·HMM 결과입니다).
 
 ---
 
@@ -186,6 +224,10 @@ AAPL · 2807행 × 15피처 · 시간순 5겹 워크포워드 · 시드 5개 · 
 | RF-Vol | 28.1 | 9.4 | 53.1 | 24 | +1.9% | 3/5 |
 | GJR-GARCH | 28.1 | **43.2** | 18.9 | 13 | **+8.6%** | 2/5 |
 | EWMA * | −2.1 | 0 | 0 | 90 | 0% | 0/5 |
+
+사전 학습 EGARCH를 넣으면 순위가 바뀝니다 — 총점 **42.7**로 1위(MSE 6.964e-7,
+예측력 40.2, 폴드 승률 3/5). 원시 MSE는 GJR-GARCH가 더 낮은데도 EGARCH가 앞서는
+이유는 폴드마다 성적이 덜 흔들리기 때문입니다.
 
 `*` = 기준선. 기준선이 자기 축에서 정확히 0점을 받는 것으로 점수 체계가 검증됩니다.
 

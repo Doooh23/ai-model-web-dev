@@ -12,14 +12,14 @@ pandas>=2.0
 # 실제 주가 내려받기 (매크로 지표는 FRED 공개 CSV라 키가 필요 없습니다)
 yfinance>=0.2.40
 
-# --- 2단계에서 추가될 사전 학습용 (pipeline/train_models.py) -----------------
-# LSTM·GRU·Transformer·TCN 학습에 필요. GPU를 쓰려면 CUDA 빌드로 따로 설치하세요:
+# --- 사전 학습 (pipeline/train_models.py) ------------------------------------
+#
+# EGARCH 와 HMM 은 numpy 만으로 직접 구현해 두어 추가 설치가 필요 없습니다.
+# LSTM·GRU·TCN·Transformer 만 torch 가 필요합니다. 없으면 자동으로 건너뜁니다
+# (또는 --skip-deep 로 명시적으로 끌 수 있습니다).
+#
+# CPU 전용 빌드 (권장 — 기본 빌드는 CUDA까지 받아 와 훨씬 큽니다):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# GPU 를 쓰려면 드라이버에 맞는 CUDA 빌드로:
 #   pip install torch --index-url https://download.pytorch.org/whl/cu124
 # torch>=2.0
-#
-# EGARCH 등 비대칭 변동성 모형의 정밀 추정
-# arch>=6.0
-#
-# HMM 국면 라벨
-# hmmlearn>=0.3
-# scikit-learn>=1.3

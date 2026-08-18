@@ -162,10 +162,21 @@
       box.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
       REG.list({ task: task, ready: true }).forEach(function (d) {
         if (d.baseline) return;                       // 기준선은 자동이라 고를 필요가 없습니다
-        const on = S.picked[task].indexOf(d.id) >= 0;
+        // 사전 학습 모델은 파이프라인이 돌린 종목만 예측값이 있습니다.
+        const covered = d.exec !== 'pre' || (root.PRED && root.PRED.has(d.id, S.ticker));
+        const on = covered && S.picked[task].indexOf(d.id) >= 0;
         const c = U.el('button', 'chip' + (on ? ' on' : ''));
         c.innerHTML = U.escape(d.name) +
           (d.exec === 'pre' ? ' <span class="badge badge-pre">사전</span>' : '');
+        if (!covered) {
+          c.disabled = true;
+          c.style.opacity = '0.45';
+          c.style.cursor = 'not-allowed';
+          c.title = S.ticker + ' 은(는) 사전 학습 대상 종목이 아닙니다. ' +
+            'pipeline/train_models.py 의 --tickers 에 넣고 다시 돌리면 쓸 수 있습니다.';
+          box.appendChild(c);
+          return;
+        }
         c.addEventListener('click', function () {
           const i = S.picked[task].indexOf(d.id);
           if (i >= 0) S.picked[task].splice(i, 1); else S.picked[task].push(d.id);
@@ -238,7 +249,12 @@
     draw(host);
     await U.yield_();
     try {
-      const ids = S.picked.direction.concat(S.picked.volatility);
+      // 종목을 바꿨는데 예측값이 없는 사전 학습 모델이 골라져 있으면 여기서 걸러 냅니다.
+      const ids = S.picked.direction.concat(S.picked.volatility).filter(function (id) {
+        const d = REG.get(id);
+        return d && (d.exec !== 'pre' || (root.PRED && root.PRED.has(id, S.ticker)));
+      });
+      if (!ids.length) throw new Error('이 종목에서 돌릴 수 있는 모델이 없습니다.');
       await EXP.run(ids, {
         ticker: S.ticker,
         folds: S.cfg.folds,

@@ -271,5 +271,63 @@
     return { ticker: ticker, ret: r, dates: ds, idx: idx };
   };
 
+  /* ------------------------------------------------------------------------
+   *  6) 파이썬과 값이 같은지 검사
+   *
+   *  pipeline/features.py 가 이 파일과 **똑같은 값**을 만들어야 합니다.
+   *  한쪽만 고치면 브라우저 모델과 사전 학습 모델의 비교가 조용히 무너집니다
+   *  (성적 차이가 모델 때문인지 피처 때문인지 알 수 없게 됩니다).
+   *
+   *  쓰는 법 — 먼저 `python -m pipeline.check_parity` 를 돌린 뒤,
+   *           브라우저 콘솔에서 `await QL.FEAT.checkParity()`
+   * ----------------------------------------------------------------------*/
+  F.checkParity = function (url) {
+    return fetch(url || 'data/parity_check.json', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('parity_check.json 이 없습니다. 먼저 python -m pipeline.check_parity 를 돌리세요.');
+        return r.json();
+      })
+      .then(function (py) {
+        const ds = F.build(py.ticker);
+        const pos = {};
+        ds.dates.forEach(function (d, i) { pos[d] = i; });
+        const diffs = [];
+
+        if (JSON.stringify(ds.cols) !== JSON.stringify(py.cols)) {
+          diffs.push({ what: '피처 이름 목록이 다릅니다', js: ds.cols, py: py.cols });
+        }
+        if (ds.X.length !== py.n) diffs.push({ what: '행 수가 다릅니다', js: ds.X.length, py: py.n });
+        if (ds.featVer !== py.featVer) diffs.push({ what: '피처 버전이 다릅니다', js: ds.featVer, py: py.featVer });
+
+        py.rows.forEach(function (r) {
+          const i = pos[r.date];
+          if (i === undefined) { diffs.push({ what: '없는 날짜', date: r.date }); return; }
+          if (ds.y[i] !== r.y) diffs.push({ what: '정답이 다릅니다', date: r.date, js: ds.y[i], py: r.y });
+          r.x.forEach(function (v, j) {
+            const jsv = ds.X[i][j];
+            const abs = Math.abs(jsv - v);
+            if (abs > 1e-9 && abs / Math.max(1e-9, Math.abs(v)) > 1e-9) {
+              diffs.push({ what: '값이 다릅니다', date: r.date, col: ds.cols[j], js: jsv, py: v });
+            }
+          });
+        });
+
+        const jsSp = JSON.stringify(root.SPLIT.walkForward(ds.X.length, {}).map(function (s) {
+          return [s.trainLo, s.trainHi, s.testLo, s.testHi];
+        }));
+        const pySp = JSON.stringify((py.splits || []).map(function (s) {
+          return [s.train_lo, s.train_hi, s.test_lo, s.test_hi];
+        }));
+        if (jsSp !== pySp) diffs.push({ what: '시간순 분할이 다릅니다', js: jsSp, py: pySp });
+
+        const out = { ok: diffs.length === 0, nDiff: diffs.length, ticker: py.ticker,
+          rows: ds.X.length, cols: ds.cols.length, diffs: diffs.slice(0, 10) };
+        console[out.ok ? 'log' : 'warn'](out.ok
+          ? '✓ 파이썬과 값이 완전히 같습니다 (' + out.rows + '행 × ' + out.cols + '피처)'
+          : '✗ 불일치 ' + out.nDiff + '건', out);
+        return out;
+      });
+  };
+
   root.FEAT = F;
 })(window.QL = window.QL || {});
