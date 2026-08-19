@@ -74,6 +74,7 @@
     const thead = U.el('thead'), tr = U.el('tr');
     headers.forEach(function (h) {
       const th = U.el('th', h.num ? 'num' : '');
+      th.scope = 'col';
       th.innerHTML = (h.label !== undefined ? h.label : h);
       if (h.width) th.style.width = h.width;
       tr.appendChild(th);
@@ -328,4 +329,9 @@
   };
 
   root.App = App;
+
+  // 모든 화면 스크립트가 등록을 마친 뒤(문서 파싱이 끝난 뒤) 스스로 시작합니다.
+  // index.html 에 인라인 <script> 를 두지 않기 위해서입니다 — 인라인 스크립트가
+  // 없어야 CSP 에서 script-src 'self' 만 허용할 수 있습니다.
+  document.addEventListener('DOMContentLoaded', function () { App.boot(); });
 })(window.QL = window.QL || {});

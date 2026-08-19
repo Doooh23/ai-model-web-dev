@@ -3,10 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 이 사이트는 같은 저장소의 파일만 씁니다. CSP 로 그 사실을 못 박아 두면,
+     혹시 외부 스크립트가 끼어드는 사고(확장 프로그램 주입, 의존성 오염 등)가
+     생겨도 브라우저가 막아 줍니다. 인라인 <script> 는 일부러 두지 않았습니다.
+     style 의 'unsafe-inline' 은 화면 코드가 style 속성을 쓰기 때문입니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <title>AI MODEL LAB — 나스닥 AI 모델 비교</title>
 <meta name="description" content="여러 AI 모델로 나스닥 주가를 예측·모의투자해 보고, 어떤 모델이 어떤 상황에 적합한지 점수로 비교하는 교육용 사이트.">
 <meta name="theme-color" content="#0f1218">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://doooh23.github.io/ai-model-web-dev/">
 <meta property="og:title" content="AI MODEL LAB — 나스닥 AI 모델 비교">
 <meta property="og:description" content="여러 AI 모델에게 똑같은 문제를 내고, 어떤 모델이 어떤 상황에 적합한지 점수로 비교합니다. 고등학생을 위한 교육용 사이트.">
 <meta name="twitter:card" content="summary">
@@ -19,7 +25,7 @@
 
   <!-- 왼쪽 세로 내비게이션. 0→7 학습 순서가 위에서 아래로 흐릅니다. -->
   <aside class="side">
-    <nav class="steps" id="nav">
+    <nav class="steps" id="nav" aria-label="학습 단계">
       <span class="step-grp">시작</span>
       <button class="step on" data-screen="home"><b>0</b><span>시작</span></button>
 
@@ -100,6 +106,5 @@
 <script src="js/screens/score.js"></script>
 <script src="js/screens/learn.js"></script>
 <script src="js/screens/guide.js"></script>
-<script>QL.App.boot();</script>
 </body>
 </html>

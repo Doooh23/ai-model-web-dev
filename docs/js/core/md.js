@@ -64,12 +64,16 @@
     // ③ 링크. 문서 안 목차 링크(#...)와 바깥 링크를 다르게 답니다.
     //    만들어 둔 <a> 를 잠시 빼 둡니다. 다음 단계의 '맨 URL 자동 링크'가
     //    href 안의 주소를 또 링크로 감싸는 사고를 막기 위해서입니다.
+    // href 는 속성 안에 들어가므로 따옴표를 반드시 막습니다. 문서는 우리
+    // 저장소 것이지만, "속성에 넣는 값은 항상 속성용으로 이스케이프한다"는
+    // 규칙에 예외를 만들기 시작하면 언젠가 뚫립니다.
+    const attr = function (v) { return v.replace(/"/g, '%22').replace(/'/g, '%27'); };
     const links = [];
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, t, href) {
       let html;
-      if (href.charAt(0) === '#') html = '<a href="' + href + '">' + t + '</a>';
+      if (href.charAt(0) === '#') html = '<a href="' + attr(href) + '">' + t + '</a>';
       else if (/^https?:\/\//.test(href)) {
-        html = '<a href="' + href + '" target="_blank" rel="noopener">' + t + '</a>';
+        html = '<a href="' + attr(href) + '" target="_blank" rel="noopener">' + t + '</a>';
       } else html = t;                           // 상대 경로 링크는 글자만 남깁니다
       links.push(html);
       return '\uE001' + (links.length - 1) + '\uE001';
@@ -80,7 +84,7 @@
     s = s.replace(/https?:\/\/[^\s<)]+/g, function (url) {
       const tail = url.match(/[.,)]+$/);
       const clean = tail ? url.slice(0, -tail[0].length) : url;
-      return '<a href="' + clean + '" target="_blank" rel="noopener">' + clean + '</a>' +
+      return '<a href="' + attr(clean) + '" target="_blank" rel="noopener">' + clean + '</a>' +
         (tail ? tail[0] : '');
     });
 
