@@ -55,6 +55,18 @@
       p0.body.appendChild(guide);
       host.appendChild(p0);
 
+      /* --- 네 모델만 보는 판정 페이지 --------------------------------------- */
+      const pv = App.panel('결론만 빠르게 보고 싶다면', { sub: '별도 페이지 · 네 모델만' });
+      pv.body.appendChild(App.note(
+        '이 사이트는 30개 모델을 여러 각도로 비교하는 실험실입니다. ' +
+        '그 대신 <b>LSTM · ARIMA · 랜덤포레스트 · 로지스틱 회귀</b> 네 모델만 놓고 ' +
+        '"기준선을 넘는가"라는 <b>한 가지 질문</b>에만 답하는 페이지를 따로 두었습니다. ' +
+        '모의투자 같은 실습 없이, 신뢰구간·겹별 성적·과적합 간격으로 결론을 바로 보여 줍니다.'));
+      const vlink = U.el('a', 'btn', '네 모델 판정 열기 →');
+      vlink.href = 'verdict.html';
+      pv.body.appendChild(vlink);
+      host.appendChild(pv);
+
       /* --- 지금 데이터 상태 ------------------------------------------------ */
       const m = DATA.state.meta || {};
       const p1 = App.panel('데이터 현황', { sub: '매일 미국장 마감 뒤 자동으로 갱신됩니다' });

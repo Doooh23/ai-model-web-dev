@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 같은 저장소의 파일만 씁니다. 인라인 <script> 를 두지 않았기 때문에
+     script-src 를 'self' 로 못 박을 수 있습니다. 글꼴도 내려받지 않습니다. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<title>네 모델 판정 — LSTM · ARIMA · 랜덤포레스트 · 로지스틱 회귀</title>
+<meta name="description" content="네 개의 예측 모델이 기준선을 넘는지를 같은 조건에서 실제로 학습시켜 판정합니다. 결과는 신뢰구간·폴드별 성적·거래비용 민감도로 확인할 수 있습니다.">
+<meta name="theme-color" content="#f8f8f6">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://doooh23.github.io/ai-model-web-dev/verdict.html">
+<meta property="og:title" content="네 모델 판정">
+<meta property="og:description" content="LSTM · ARIMA · 랜덤포레스트 · 로지스틱 회귀 — 네 모델이 기준선을 넘는가. 브라우저에서 직접 학습시켜 확인합니다.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230b0b0b'/><path d='M6 20h20' stroke='white' stroke-width='2'/><circle cx='11' cy='20' r='3' fill='%232a78d6'/><circle cx='19' cy='20' r='3' fill='%232a78d6'/></svg>">
+<link rel="stylesheet" href="css/verdict.css">
+</head>
+<body>
+
+<a class="skip" href="#verdict">본문으로 건너뛰기</a>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="bar-t" href="verdict.html"><b>네 모델 판정</b><span>LSTM · ARIMA · 랜덤포레스트 · 로지스틱 회귀</span></a>
+    <nav class="bar-n" aria-label="구간 이동">
+      <a href="#verdict">판정</a>
+      <a href="#skill">예측력</a>
+      <a href="#profit">수익</a>
+      <a href="#fold">일관성</a>
+      <a href="#gap">과적합</a>
+      <a href="#close">결론</a>
+    </nav>
+    <a class="bar-x" href="index.html">전체 실험실 →</a>
+  </div>
+  <div class="bar-p" id="barp" hidden><i id="barpi"></i></div>
+</header>
+
+<main class="page">
+
+  <!-- ─ 표제 ────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <p class="eyebrow">단일 질문 검증 · 실측</p>
+    <h1>네 모델은 <em>기준선</em>을 넘는가</h1>
+    <p class="lede">
+      LSTM · ARIMA · 랜덤포레스트 · 로지스틱 회귀. 널리 쓰이는 네 모델에게
+      나스닥 종목의 <b>다음 거래일 방향</b>을 맞히게 하고, 아무것도 학습하지 않는 기준선과
+      나란히 놓습니다. 아래 모든 숫자는 이 페이지가 지금 브라우저에서 직접 학습시켜 계산한 값입니다.
+    </p>
+    <div class="ctl">
+      <label for="tk">종목</label>
+      <select id="tk" disabled><option>불러오는 중…</option></select>
+      <button id="run" class="btn" disabled>다시 실행</button>
+      <span class="ctl-s" id="stat">데이터를 읽는 중…</span>
+    </div>
+  </section>
+
+  <!-- ─ 판정 ────────────────────────────────────────────────────────────── -->
+  <section id="verdict" class="sec">
+    <h2><span class="sn">판정</span>네 개의 숫자</h2>
+    <p class="col">각 숫자 아래의 한 줄이 그 숫자를 어떻게 읽어야 하는지 말해 줍니다.</p>
+    <div class="tiles" id="tiles"></div>
+    <div class="oneline" id="oneline" hidden></div>
+  </section>
+
+  <!-- ─ 대상과 조건 ─────────────────────────────────────────────────────── -->
+  <section id="setup" class="sec">
+    <h2><span class="sn">01</span>비교 대상과 실험 조건</h2>
+    <p class="col">
+      네 모델은 계열이 서로 다릅니다 — 선형·통계·트리·신경망. 같은 계열끼리만 비교하면
+      “다른 방식은 안 써 봤다”는 반론에 답할 수 없기 때문입니다.
+    </p>
+    <div class="cards" id="cards"></div>
+
+    <h3>모든 모델에 똑같이 적용되는 조건</h3>
+    <ul class="checks" id="checks"></ul>
+    <p class="fine" id="dsline"></p>
+  </section>
+
+  <!-- ─ 예측력 ──────────────────────────────────────────────────────────── -->
+  <section id="skill" class="sec">
+    <h2><span class="sn">02</span>예측력 — 기준선을 넘었는가</h2>
+    <p class="col">
+      가로축은 <b>AUC</b>입니다. 0.5는 “실력 없음”, 즉 동전 던지기와 같다는 뜻입니다.
+      점은 다섯 겹 평균이고, 가로로 뻗은 선은 <b>95% 신뢰구간</b>입니다.
+      선이 0.5를 지나가면 그 모델의 성적은 우연으로 설명됩니다.
+    </p>
+    <figure class="fig">
+      <div class="viz" id="ci"></div>
+      <figcaption id="ciCap"></figcaption>
+    </figure>
+    <div class="read" id="ciRead"></div>
+  </section>
+
+  <!-- ─ 정확도 함정 ─────────────────────────────────────────────────────── -->
+  <section id="acc" class="sec">
+    <h2><span class="sn">03</span>정확도를 그대로 믿으면 안 되는 이유</h2>
+    <p class="col">
+      정확도는 “몇 %를 맞혔나”입니다. 그런데 이 시장은 오르는 날이 더 많습니다.
+      그래서 <b>아무 판단도 하지 않고 “항상 오른다”고만 답해도</b> 정확도가 상당히 높게 나옵니다.
+      아래 굵은 세로선이 그 기준선입니다.
+    </p>
+    <figure class="fig">
+      <div class="viz" id="acc1"></div>
+      <figcaption id="accCap"></figcaption>
+    </figure>
+    <div class="read" id="accRead"></div>
+  </section>
+
+  <!-- ─ 수익 ────────────────────────────────────────────────────────────── -->
+  <section id="profit" class="sec">
+    <h2><span class="sn">04</span>수익 — 그대로 매매했다면</h2>
+    <p class="col">
+      예측 확률이 기준값을 넘으면 사고 아니면 쉬는 방식으로, 시험 구간 전체를 이어 붙였습니다.
+      포지션이 바뀔 때마다 <b>편도 0.10%의 거래비용</b>을 뗍니다. 회색 선은
+      <b>아무것도 하지 않고 그냥 들고 있었을 때</b>입니다.
+    </p>
+    <div class="mults" id="mult"></div>
+    <div class="read" id="multNote"></div>
+
+    <h3>거래비용을 바꾸면</h3>
+    <p class="col">
+      모델을 다시 학습하지 않고, 이미 나온 예측 확률에 비용만 다시 물려 계산한 것입니다.
+      자주 갈아타는 모델일수록 오른쪽으로 갈수록 빠르게 무너집니다.
+    </p>
+    <div class="tbl" id="cost"></div>
+  </section>
+
+  <!-- ─ 폴드 일관성 ─────────────────────────────────────────────────────── -->
+  <section id="fold" class="sec">
+    <h2><span class="sn">05</span>일관성 — 겹마다 다시 보기</h2>
+    <p class="col">
+      다섯 겹은 서로 다른 시기입니다. 실력이 있다면 어느 시기든 대체로 0.5를 넘어야 합니다.
+      아래 격자에서 <b>채워진 칸</b>이 그 겹에서 0.5를 넘긴 경우입니다.
+    </p>
+    <figure class="fig">
+      <div class="viz" id="grid"></div>
+      <figcaption id="gridCap"></figcaption>
+    </figure>
+    <div class="read" id="gridRead"></div>
+  </section>
+
+  <!-- ─ 과적합 ──────────────────────────────────────────────────────────── -->
+  <section id="gap" class="sec">
+    <h2><span class="sn">06</span>과적합 — 학습은 잘하는데 시험은 못한다</h2>
+    <p class="col">
+      같은 모델에게 <b>배운 구간</b>을 다시 풀게 한 성적과, <b>한 번도 보지 못한 구간</b>의 성적을
+      나란히 놓습니다. 두 점 사이가 벌어질수록 “외운 것”에 가깝습니다.
+    </p>
+    <figure class="fig">
+      <div class="viz" id="gapv"></div>
+      <figcaption id="gapCap"></figcaption>
+    </figure>
+    <div class="read" id="gapRead"></div>
+  </section>
+
+  <!-- ─ 전체 수치 ───────────────────────────────────────────────────────── -->
+  <section id="all" class="sec">
+    <h2><span class="sn">07</span>전체 수치</h2>
+    <p class="col">위의 모든 그림이 이 표 하나에서 나왔습니다.</p>
+    <div class="tbl" id="main"></div>
+    <p class="fine" id="mainNote"></p>
+  </section>
+
+  <!-- ─ 결론 ────────────────────────────────────────────────────────────── -->
+  <section id="close" class="sec">
+    <h2><span class="sn">결론</span>여기서 무엇이 확인되었나</h2>
+    <div class="chain" id="chain"></div>
+    <div class="verdict-box" id="final"></div>
+    <div class="callout">
+      <p><b>이 페이지가 답하지 않는 것.</b> 여기서 확인한 것은
+        “<b>이 네 모델이, 이 자료로, 다음 거래일의 방향을</b> 기준선보다 잘 맞히지 못한다”까지입니다.
+        “AI는 주가를 예측할 수 없다”로 넓히면 반박당합니다 — 예측 주기가 길어지거나, 입력이 달라지거나,
+        예측 대상이 방향이 아니라 변동성이면 결과가 달라지기 때문입니다.
+        실제로 변동성 예측에서는 같은 장치로 개선이 나타납니다.</p>
+      <p class="fine">그 대비까지 보려면 <a href="index.html">전체 실험실</a>에서 30개 모델·3개 과제를 비교할 수 있습니다.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>모든 수치는 이 페이지가 브라우저에서 직접 학습시켜 계산한 실측값입니다.
+       같은 종목·같은 조건이면 몇 번을 다시 눌러도 같은 값이 나옵니다.</p>
+    <p class="fine">나스닥100 현재 구성종목만 사용하므로 생존 편향이 있습니다 — 기준선(그냥 들고 있기)에
+       유리한 방향이며, 따라서 이 페이지의 결론을 더 보수적으로 만듭니다.
+       교육·연구용이며 실제 투자 판단의 근거가 될 수 없습니다.</p>
+  </footer>
+
+</main>
+
+<div class="boot" id="boot"><div class="boot-in"><span class="spin"></span><p id="bootT">시장 데이터를 읽는 중…</p></div></div>
+
+<!-- 엔진 — 전체 실험실과 완전히 같은 코드를 씁니다 -->
+<script src="js/core/util.js"></script>
+<script src="js/core/metrics.js"></script>
+<script src="js/core/ml.js"></script>
+<script src="js/data.js"></script>
+<script src="js/features.js"></script>
+<script src="js/splits.js"></script>
+<script src="js/registry.js"></script>
+<script src="js/core/ml_lite.js"></script>
+<script src="js/core/vol.js"></script>
+<script src="js/core/regime.js"></script>
+<script src="js/predictions.js"></script>
+<script src="js/experiment.js"></script>
+<script src="js/score.js"></script>
+<!-- 이 페이지 전용 -->
+<script src="js/verdict/viz.js"></script>
+<script src="js/verdict/main.js"></script>
+
+</body>
+</html>
